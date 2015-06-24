@@ -19,7 +19,6 @@
 namespace JMS\I18nRoutingBundle\Router;
 
 use JMS\I18nRoutingBundle\Exception\NotAcceptableLanguageException;
-
 use Symfony\Component\Routing\Matcher\RequestMatcherInterface;
 use Symfony\Component\Routing\RequestContext;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -109,7 +108,7 @@ class I18nRouter extends Router
         $currentLocale = $this->context->getParameter('_locale');
         if (isset($parameters['_locale'])) {
             $locale = $parameters['_locale'];
-        } else if ($currentLocale) {
+        } elseif ($currentLocale) {
             $locale = $currentLocale;
         } else {
             $locale = $this->defaultLocale;
@@ -192,15 +191,17 @@ class I18nRouter extends Router
 
     private function matchI18n(array $params, $url)
     {
+        $currentLocale = $this->context->getParameter('_locale');
+
         if (false === $params) {
             return false;
         }
 
-        if (isset($params['_locales'])) {
+        if (!array_key_exists('_locales', $params)) {
             if (false !== $pos = strpos($params['_route'], I18nLoader::ROUTING_PREFIX)) {
                 $params['_route'] = substr($params['_route'], $pos + strlen(I18nLoader::ROUTING_PREFIX));
             }
-
+            
             if (!($currentLocale = $this->context->getParameter('_locale'))
                     && $this->container->isScopeActive('request')) {
                 $currentLocale = $this->localeResolver->resolveLocale(
@@ -212,9 +213,8 @@ class I18nRouter extends Router
                     $currentLocale = reset($params['_locales']);
                 }
             }
-
-            if (!in_array($currentLocale, $params['_locales'], true)) {
-                // TODO: We might want to allow the user to be redirected to the route for the given locale if
+        } elseif (!in_array($currentLocale, $params['_locales'], true)) {
+            // TODO: We might want to allow the user to be redirected to the route for the given locale if
                 //       it exists regardless of whether it would be on another domain, or the same domain.
                 //       Below we assume that we do not want to redirect always.
 
@@ -222,7 +222,7 @@ class I18nRouter extends Router
                 if ($this->hostMap) {
                     // generate host maps
                     $hostMap = $this->hostMap;
-                    $availableHosts = array_map(function($locale) use ($hostMap) {
+                    $availableHosts = array_map(function ($locale) use ($hostMap) {
                         return $hostMap[$locale];
                     }, $params['_locales']);
 
@@ -242,11 +242,11 @@ class I18nRouter extends Router
 
                 // no host map, or same host means that the given locale is not supported for this route
                 throw new NotAcceptableLanguageException($currentLocale, $params['_locales']);
-            }
+            
 
             unset($params['_locales']);
             $params['_locale'] = $currentLocale;
-        } else if (isset($params['_locale']) && 0 < $pos = strpos($params['_route'], I18nLoader::ROUTING_PREFIX)) {
+        } elseif (isset($params['_locale']) && 0 < $pos = strpos($params['_route'], I18nLoader::ROUTING_PREFIX)) {
             $params['_route'] = substr($params['_route'], $pos + strlen(I18nLoader::ROUTING_PREFIX));
         }
 
