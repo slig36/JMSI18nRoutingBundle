@@ -197,7 +197,7 @@ class I18nRouter extends Router
             return false;
         }
 
-        if (!array_key_exists('_locales', $params)) {
+        if ( (!array_key_exists('_locales', $params) || !array_key_exists('_locale', $params)) {
             if (false !== $pos = strpos($params['_route'], I18nLoader::ROUTING_PREFIX)) {
                 $params['_route'] = substr($params['_route'], $pos + strlen(I18nLoader::ROUTING_PREFIX));
             }
